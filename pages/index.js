@@ -21,9 +21,11 @@ export default function Home() {
   
   // response from read operation is stored in the below variable
   const [storedNumber, setStoredNumber] = useState();
+  const [newNumber, setNewNumber] = useState()
 
   // the value entered in the input field is stored in the below variable
   const [enteredNumber, setEnteredNumber] = useState(0);
+  const [enter, setEnter] = useState(0)
 
   // the variable is used to invoke loader
   const [storeLoader, setStoreLoader] = useState(false)
@@ -107,6 +109,53 @@ export default function Home() {
     }
   }
 
+  async function readNumb(provider){
+    try {
+      setRetrieveLoader(true)
+      const signer = provider.getSigner();
+  
+      // initalize smartcontract with the essentials detials.
+      const smartContract = new ethers.Contract(contractAddress, abi, provider);
+      const contractWithSigner = smartContract.connect(signer);
+  
+      // interact with the methods in smart contract
+      const response = await contractWithSigner.readNumber();
+  
+      console.log(parseInt(response))
+      setNewNumber(parseInt(response))
+      setRetrieveLoader(false)
+      return
+    } catch (error) {
+      alert(error)
+      setRetrieveLoader(false)
+      return
+    }
+  }
+  
+  async function writeNumb(){
+    try {
+      setStoreLoader(true)
+      const signer = provider.getSigner();
+      const smartContract = new ethers.Contract(contractAddress, abi, provider);
+      const contractWithSigner = smartContract.connect(signer);
+
+      // interact with the methods in smart contract as it's a write operation, we need to invoke the transation usinf .wait()
+      const writeNumTX = await contractWithSigner.writeNumber(enter);
+      const response = await writeNumTX.wait()
+      console.log(await response)
+      setStoreLoader(false)
+
+      alert(`Number stored successfully ${enter}`)   
+      return
+
+    } catch (error) {
+      alert(error)
+      setStoreLoader(false)
+      return
+    }
+  }
+
+
   useEffect(() => {
     initWallet();
   }, [])
@@ -173,6 +222,63 @@ export default function Home() {
                   </svg>
               ): "STORE"} </button>
 
+
+
+
+<h3>This action retrieves the saved number from smart contract. (i.e Read Operation)</h3>
+      <button className='px-4 py-1 bg-slate-300 hover:bg-slate-500 flex justify-around transition-all w-32' onClick={()=>readNumb(provider)}> { retrieveLoader ? (
+                  <svg
+                    className="animate-spin m-1 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75 text-gray-700"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+              ): "RETRIEVE"} </button>
+      <h4>The stored number is <span className='font-bold'>{newNumber ? newNumber : 0}</span> </h4>
+      <hr></hr>
+
+      <h3>This action saves entered number into the smart contract. (i.e Write Operation) </h3>
+      <div>
+        <input onChange={(e)=>{
+          setEnter(e.target.value);
+        }} className="placeholder:italic transition-all placeholder:text-gray-500 w-4/6 border border-gray-500 rounded-md p-2 shadow-sm focus:outline-none focus:border-sky-500 focus:ring-sky-500 focus:ring-1 sm:text-sm" placeholder="Enter a number to store" type="text" name="store"/>
+      </div>
+      <button onClick={writeNumb} className='px-4 py-1 bg-slate-300 flex justify-around hover:bg-slate-500 transition-all w-32'> { storeLoader ? (
+                  <svg
+                    className="animate-spin m-1 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75 text-gray-700"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+              ): "STORE"} </button>
 
     </div>
   )
